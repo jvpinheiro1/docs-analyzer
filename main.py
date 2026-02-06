@@ -1,7 +1,8 @@
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
 from schemas import RepositorioRequest
-from database import engine, Base
+from database import engine, Base, get_db
 import models 
 
 models.Base.metadata.create_all(bind=engine)
@@ -16,7 +17,7 @@ def extract_infos_repo(url: str):
     return parts[-2], parts[-1]
 
 @app.post("/analyze")
-async def analyzer_repo(request: RepositorioRequest): 
+async def analyzer_repo(request: RepositorioRequest, db: Session = Depends(get_db)): 
         owner, repo = extract_infos_repo(request.github_url)
 
         if not owner or not repo:
@@ -32,25 +33,22 @@ async def analyzer_repo(request: RepositorioRequest):
         
         data = response.json()
 
-        return {
-            #  "data": data
-             "name": data["name"],
-             "owner": data["owner"]["login"],
-             "stars": data["stargazers_count"],
-             "language": data["language"],
-             "description": data["description"]
-        }
+        db_repo = models.Repositorio(
+            github_url=str(request.github_url),
+            name= data["name"],
+            owner= data["owner"]["login"],
+            stars= data["stargazers_count"],
+            language= data["language"],
+            description= data["description"]
+        )
 
+        db.add(db_repo)
+        db.commit()
+        db.refresh(db_repo)
 
-# @app.get("/items/{item_id}")
-# async def read_items(item_id: int):
-#     return simulation_db[item_id]
+        return db_repo
 
-# @app.post("/items/new")
-# def create_item(item: Item):
-#     simulation_db.append(item)
-#     return item
-
-# @app.get("/items/")
-# def list_items():
-#     return simulation_db
+@app.get("/repos")
+def list_repos(db :Session = Depends(get_db)):
+     repos = db.query(models.Repositorio).all()
+     return repos
