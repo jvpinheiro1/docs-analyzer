@@ -1,0 +1,13 @@
+# Ignorar ambiente virtual
+.venv/
+venv/
+
+# Ignorar cache do Python (lixo compilado)
+__pycache__/
+
+# Ignorar Banco de Dados (NUNCA suba dados reais)
+*.db
+*.sqlite3
+
+# Ignorar arquivos de sistema do PC
+.DS_Store
