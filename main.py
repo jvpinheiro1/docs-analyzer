@@ -52,3 +52,24 @@ async def analyzer_repo(request: RepositorioRequest, db: Session = Depends(get_d
 def list_repos(db :Session = Depends(get_db)):
      repos = db.query(models.Repositorio).all()
      return repos
+
+@app.get("/repos/{repo_id}")
+def list_repo_byId(repo_id: int, db: Session = Depends(get_db)):
+     repo = db.query(models.Repositorio).filter(models.Repositorio.id == repo_id).first()
+
+     if repo is None:
+        raise HTTPException(status_code=404, detail="Repositorio não encontrado.")
+     
+     return repo
+
+@app.delete("/repos/{repo_id}")
+def del_byId(repo_id: int, db: Session = Depends(get_db)):
+    repo = db.query(models.Repositorio).filter(models.Repositorio.id == repo_id).first()
+
+    if repo is None:
+          raise HTTPException(status_code=404, detail="Repositorio não encontrado.")
+    db.delete(repo)
+    db.commit()
+
+    return {"message" : "Repositorio deletado com sucesso!"}
+    
